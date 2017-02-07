@@ -1,109 +1,78 @@
-
 // works: just call phantomjs screenshots_promise.js
 
-"use strict";
-const webpage = require('webpage')
+'use strict'
 
-function screenshot(config) {
+var webpage = require('webpage')
 
+var Promise = require('bluebird')
+
+var urls = [
+  'http://google.com/',
+  'http://yahoo.com'
+]
+
+var dimensions = [
+  [320, 480, 'iPhone4'],
+  [414, 736, 'iPhone6Plus'],
+  [375, 667, 'iPhone6'],
+  [320, 568, 'iPhone5'],
+  [360, 640, 'SamsungGalaxyNote2'],
+  [400, 640, 'SamsungGalaxyNote'],
+  [1024, 1366, 'iPadPro'],
+  [768, 1024, 'iPadAir2and3']
+]
+
+console.log('hello')
+function loadPage (url, index) {
+  return new Promise(function (resolve, reject) {
+
+    Promise.all(dimensions.map(renderDimensions(url))).then(function () {
+      resolve(1)
+    })
+  })
 }
-
-const urls = []
-
 function getDate () {
-  const dateObject = new Date()
-  const year = dateObject.getFullYear()
-  const month = dateObject.getMonth()
-  const date = dateObject.getDate()
-
-  return `${year}-${month}-${date}`
+  var dateObject = new Date()
+  var year = dateObject.getFullYear()
+  var month = dateObject.getMonth()
+  var date = dateObject.getDate()
+  return year + '-' + month + '-' + date
 }
 
-const config = {
-  folder: `output/${getDate()}`,
-  fileFormat: '.png',
-  baseUrl: 'http://www.google.com',
-  // delay: 300, 
-  dimensions: [
-    [320, 480, 'iPhone4'],
-    [414, 736, 'iPhone6Plus'],
-    [375, 667, 'iPhone6'],
-    [320, 568, 'iPhone5'],
-    [360, 640, 'SamsungGalaxyNote2'],
-    [400, 640, 'SamsungGalaxyNote'],
-    [1024, 1366, 'iPadPro'],
-    [768, 1024, 'iPadAir2and3']
-  ]
+function renderDimensions (url) {
+  return function (dimensions) {
+    var width = dimensions[0]
+    var height = dimensions[1]
+    var name = dimensions[2]
+    return renderPage(width, height, name, url)
+  }
 }
-
-function renderByDimension(url) {
-  return config.dimensions.reduce((promise, dimension) => {
-    return promise.then((url) => {
-      return new Promise((resolve, reject) => {
-        const page = setupPage(dimension)
-        
-        console.log(config.baseUrl + url)
-        page.open(config.baseUrl + url, function (status) {
-
-          if (status === "success") {
-            resolve(page)
-          } else {
-            reject(url)
-          }
-        })
-      })
-    }).then(function(page) {
-      page.evaluate(function () {
-        document.body.bgColor = "white";
-      });
-      var fileName = parseName(url, dimension, config.fileFormat);
-      page.render(config.folder + fileName);
-      console.log('successfully rendered page at ' + url + ' as ' + fileName);
-      return page;
-    }).catch(function (url) {
-
-      console.log('fail to render screenshots for ' + url)
-    
-    }).then(function (page) {
-      page.close();
-      return url;
-    }).delay(config.delay);
-  }, Promise.resolve(url));
-}
-
-var promiseReduced = urls.reduce(function (promise, url) {
-  return promise.then(function (result) {
-    return renderByDimension(url);
-  }).delay(config.delay);
-}, Promise.resolve(true))
-
-promiseReduced.then(function (data) {
-  phantom.exit(0);
-})
-
-function setupPage(dimension) {
-  var page = webpage.create();
+function renderPage (width, height, name, url) {
+  var page = webpage.create()
 
   page.viewportSize = {
-    width: dimension[0],
-    height: dimension[1]
-  };
+    width: width,
+    height: height
+  }
   // page.clipRect = {
   //  top: 0,
   //  left: 0,
   //  width: dimension[0],
   //  height: dimension[1]
   // };
-  return page;
+  return new Promise(function (resolve, reject) {
+    page.open(url, function() {
+      var folder = getDate() + '/'
+      var fileName = [[width, height].join('x') + 'px', name].join('-')
+      var fileExtension = '.png'
+      page.render([folder, fileName, fileExtension].join(''))
+      resolve(1)
+    })
+  })
 }
 
-function parseName(url, dimension, format) {
-  var cleanUrl = url.replace(/\//, '');
-  var width = dimension[0];
-  var height = dimension[1];
-  var deviceName = dimension[2];
-  var dim = [width, height].join('x');
-  var fileName = [cleanUrl,deviceName, dim].join('-');
-  
-  return [fileName, format].join('');
+Promise.all(urls.map(loadPage)).then(onExit)
+
+function onExit () {
+  phantom.exit()
 }

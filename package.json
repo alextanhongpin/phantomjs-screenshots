@@ -1,0 +1,23 @@
+{
+  "name": "phantomjs-screenshot",
+  "version": "1.0.0",
+  "description": "Simple recipe for taking phantomjs screenshots",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alextanhongpin/phantomjs-screenshots.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alextanhongpin/phantomjs-screenshots/issues"
+  },
+  "homepage": "https://github.com/alextanhongpin/phantomjs-screenshots#readme",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "phantomjs": "^2.1.7"
+  }
+}
